@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "bot-spending-project"
+version = "0.1.0"
+description = "bot for check of money spent"
+authors = ["Aleksey Kosin <akosin@udm.ru>"]
+readme = "README.md"
+packages = [{include = "bot_body"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pytelegrambotapi = "^4.9.0"
+requests = "^2.28.2"
+
+[tool.poetry.scripts]
+startbot = "bot_body.start:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
