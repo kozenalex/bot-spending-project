@@ -1,9 +1,16 @@
 import telebot
 from telebot import types
 from bot_body import weather_cast
+from pathlib import Path
+from dotenv import load_dotenv
+import os
 
 # Создаем экземпляр бота
-bot = telebot.TeleBot('5561759053:AAESUfexBwfp-ftqVSP30lg6_uO5ddVnJ5w')
+env_path = os.path.join('.', '.env')
+load_dotenv(dotenv_path=env_path)
+ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
+
+bot = telebot.TeleBot(ACCESS_TOKEN)
 
 @bot.message_handler(commands=['start'])
 def start(message):
