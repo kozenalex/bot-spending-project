@@ -1,7 +1,7 @@
 import telebot
 from telebot import types
 from bot_body import weather_cast, curses
-from pathlib import Path
+import db
 from dotenv import load_dotenv
 import os
 
@@ -11,10 +11,13 @@ ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
 
 bot = telebot.TeleBot(ACCESS_TOKEN)
 startmarkup = types.ReplyKeyboardMarkup(True)
-startmarkup.add('Погода', 'Курсы')
+startmarkup.add('Погода', 'Курсы', 'Расходы')
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    db_cur, db_conn = db.db_init()
+    user_name = message.from_user.username
+    db.create_tables(db_cur, db_conn, user_name)
     bot.send_message(
         message.chat.id,
         text="Привет",
@@ -31,6 +34,11 @@ def handle_text(message):
         currency_markup.add('USD', 'EUR')
         bot.send_message(message.chat.id, 'Выбор валюты:', reply_markup=currency_markup)
         bot.register_next_step_handler(message, currency_msg)
+    elif message.text.strip() == 'Расходы':
+        spent_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        spent_markup.add(*db.CATEGORIES)
+        bot.send_message(message.chat.id, 'Категория:', reply_markup=spent_markup)
+        bot.register_next_step_handler(message, add_spent)
     else:
         bot.send_message(message.chat.id, 'Вы написали: ' + message.text)
 
@@ -49,3 +57,8 @@ def currency_msg(message):
         str(m_text) + 'руб.',
         reply_markup=startmarkup
         )
+
+@bot.message_handler(content_types=["text"])
+def add_spent(message):
+    cat = message.text.strip()
+    bot.send_message(message.chat.id, cat, reply_markup=startmarkup)
