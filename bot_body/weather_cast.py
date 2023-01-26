@@ -11,6 +11,9 @@ def get_weather(city: str):
         }
     )
     res_dict = json.loads(response.text)
-    message = 'Температура: ' + str(res_dict['current']['temp_c']) + '\n'
-    message += 'Ощущается как: ' + str(res_dict['current']['feelslike_c']) + '\n'
+    if res_dict.get('error', None):
+        message = 'Город не найден или сервис недоступен :('
+    else:
+        message = 'Температура: ' + str(res_dict['current']['temp_c']) + '\n'
+        message += 'Ощущается как: ' + str(res_dict['current']['feelslike_c']) + '\n'
     return message

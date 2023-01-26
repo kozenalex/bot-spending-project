@@ -27,7 +27,7 @@ def handle_text(message):
         bot.send_message(message.chat.id, 'Введите город')
         bot.register_next_step_handler(message, weather_msg)
     elif message.text.strip() == 'Курсы':
-        currency_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        currency_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         currency_markup.add('USD', 'EUR')
         bot.send_message(message.chat.id, 'Выбор валюты:', reply_markup=currency_markup)
         bot.register_next_step_handler(message, currency_msg)
