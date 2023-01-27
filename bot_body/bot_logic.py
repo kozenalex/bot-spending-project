@@ -15,9 +15,8 @@ startmarkup.add('Погода', 'Курсы', 'Расходы')
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    db_cur, db_conn = db.db_init()
     user_name = message.from_user.username
-    db.create_tables(db_cur, db_conn, user_name)
+    db.create_tables(user_name)
     bot.send_message(
         message.chat.id,
         text="Привет",
@@ -36,9 +35,9 @@ def handle_text(message):
         bot.register_next_step_handler(message, currency_msg)
     elif message.text.strip() == 'Расходы':
         spent_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        spent_markup.add(*db.CATEGORIES)
+        spent_markup.add(*db.CATEGORIES, 'Итого')
         bot.send_message(message.chat.id, 'Категория:', reply_markup=spent_markup)
-        bot.register_next_step_handler(message, add_spent)
+        bot.register_next_step_handler(message, get_category)
     else:
         bot.send_message(message.chat.id, 'Вы написали: ' + message.text)
 
@@ -59,6 +58,22 @@ def currency_msg(message):
         )
 
 @bot.message_handler(content_types=["text"])
-def add_spent(message):
-    cat = message.text.strip()
-    bot.send_message(message.chat.id, cat, reply_markup=startmarkup)
+def get_category(message):
+    db.cat = message.text.strip()
+    if db.cat == 'Итого':
+        sums = db.calculate_spent(message.from_user.username)
+        m_text = ''
+        for s in sums:
+            m_text += f'{s[0]}: {str(s[1])}\n'
+        bot.send_message(message.chat.id, m_text, reply_markup=startmarkup)
+    else:
+        bot.register_next_step_handler(message, add_sum)
+        bot.send_message(message.chat.id, 'Введите сумму:')
+
+@bot.message_handler(content_types=["text"])
+def add_sum(message):
+    db.summ = float(message.text.strip())
+    spent = (db.cat, db.summ)
+    db.add_spent(message.from_user.username, spent)
+    bot.send_message(message.chat.id, 'Записано!', reply_markup=startmarkup)
+
