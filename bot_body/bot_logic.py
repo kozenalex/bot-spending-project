@@ -9,6 +9,7 @@ env_path = os.path.join('.', '.env')
 load_dotenv(dotenv_path=env_path)
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
 
+
 bot = telebot.TeleBot(ACCESS_TOKEN)
 startmarkup = types.ReplyKeyboardMarkup(True)
 startmarkup.add('Погода', 'Курсы', 'Расходы')
@@ -72,8 +73,11 @@ def get_category(message):
 
 @bot.message_handler(content_types=["text"])
 def add_sum(message):
-    db.summ = float(message.text.strip())
-    spent = (db.cat, db.summ)
-    db.add_spent(message.from_user.username, spent)
-    bot.send_message(message.chat.id, 'Записано!', reply_markup=startmarkup)
+    try:
+        db.summ = float(message.text.strip())
+        spent = (db.cat, db.summ)
+        db.add_spent(message.from_user.username, spent)
+        bot.send_message(message.chat.id, 'Записано!', reply_markup=startmarkup)
+    except ValueError:
+        bot.send_message(message.chat.id, 'Надо число!', reply_markup=startmarkup)
 
