@@ -1,5 +1,11 @@
-import telebot
-from telebot import types
+import aiogram.utils.markdown as md
+from aiogram import Bot, Dispatcher, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import ParseMode
+from aiogram.utils import executor
 from bot_body import weather_cast, curses
 import db
 from dotenv import load_dotenv
@@ -10,74 +16,100 @@ load_dotenv(dotenv_path=env_path)
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
 
 
-bot = telebot.TeleBot(ACCESS_TOKEN)
-startmarkup = types.ReplyKeyboardMarkup(True)
+bot = Bot(token=ACCESS_TOKEN)
+dp = Dispatcher(bot=bot)
+
+# For example use simple MemoryStorage for Dispatcher.
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
+
+
+# States
+class BotStates(StatesGroup):
+    weather = State() 
+    curs = State()
+    spent_cat = State()
+    spent_sum = State()
+    menu = State()
+
+
+startmarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 startmarkup.add('Погода', 'Курсы', 'Расходы')
 
-@bot.message_handler(commands=['start'])
-def start(message):
+@dp.message_handler(commands=['start'])
+async def start(message: types.message):
     user_name = message.from_user.username
     db.create_tables(user_name)
-    bot.send_message(
-        message.chat.id,
-        text="Привет",
+    await BotStates.menu.set()
+    await bot.send_message(
+        message.from_user.id,
+        'Привет, выберите сервис:',
         reply_markup=startmarkup
-        )
-
-@bot.message_handler(content_types=["text"])
-def handle_text(message):
+    )
+@dp.message_handler(content_types=["text"], state=BotStates.menu)
+async def handle_text(message: types.Message):
     if message.text.strip() == 'Погода':
-        bot.send_message(message.chat.id, 'Введите город')
-        bot.register_next_step_handler(message, weather_msg)
+        await BotStates.weather.set()
+        await bot.send_message(message.chat.id, 'Введите город')
     elif message.text.strip() == 'Курсы':
         currency_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         currency_markup.add('USD', 'EUR')
-        bot.send_message(message.chat.id, 'Выбор валюты:', reply_markup=currency_markup)
-        bot.register_next_step_handler(message, currency_msg)
+        await BotStates.curs.set()
+        await bot.send_message(message.chat.id, 'Выбор валюты:', reply_markup=currency_markup)
     elif message.text.strip() == 'Расходы':
         spent_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        spent_markup.add(*db.CATEGORIES, 'Итого')
-        bot.send_message(message.chat.id, 'Категория:', reply_markup=spent_markup)
-        bot.register_next_step_handler(message, get_category)
+        spent_markup.add(*db.CATEGORIES, 'Итого', 'Назад')
+        await BotStates.spent_cat.set()
+        await bot.send_message(message.chat.id, 'Категория:', reply_markup=spent_markup)
     else:
-        bot.send_message(message.chat.id, 'Вы написали: ' + message.text)
+        await bot.send_message(message.chat.id, 'Вы написали: ' + message.text)
 
-@bot.message_handler(content_types=["text"])
-def weather_msg(message):
+@dp.message_handler(state=BotStates.weather)
+async def weather_msg(message: types.Message, state: FSMContext):
     city = message.text.strip()
     m_text = weather_cast.get_weather(city)
-    bot.send_message(message.chat.id, m_text)
+    await BotStates.menu.set()
+    await bot.send_message(message.chat.id, m_text)
 
-@bot.message_handler(content_types=["text"])
-def currency_msg(message):
+@dp.message_handler(content_types=["text"], state=BotStates.curs)
+async def currency_msg(message: types.Message, state: FSMContext):
     currency = message.text.strip()
     m_text = curses.get_curses()[currency]
-    bot.send_message(
+    await BotStates.menu.set()
+    await bot.send_message(
         message.chat.id,
         str(m_text) + 'руб.',
         reply_markup=startmarkup
         )
 
-@bot.message_handler(content_types=["text"])
-def get_category(message):
-    db.cat = message.text.strip()
-    if db.cat == 'Итого':
+@dp.message_handler(content_types=["text"], state=BotStates.spent_cat)
+async def get_category(message: types.Message, state: FSMContext):
+    cat = message.text.strip()
+    if cat == 'Итого':
         sums = db.calculate_spent(message.from_user.username)
         m_text = ''
         for s in sums:
             m_text += f'{s[0]}: {str(s[1])}\n'
-        bot.send_message(message.chat.id, m_text, reply_markup=startmarkup)
+        await bot.send_message(message.chat.id, m_text)
+    elif cat == 'Назад':
+        await BotStates.menu.set()
+        await bot.send_message(message.chat.id, 'Выберите сервис:', reply_markup=startmarkup)
     else:
-        bot.register_next_step_handler(message, add_sum)
-        bot.send_message(message.chat.id, 'Введите сумму:')
+        async with state.proxy() as data:
+            data['cat'] = cat
+        await BotStates.spent_sum.set()
+        await bot.send_message(message.chat.id, 'Введите сумму:')
 
-@bot.message_handler(content_types=["text"])
-def add_sum(message):
+@dp.message_handler(content_types=["text"], state=BotStates.spent_sum)
+async def add_sum(message: types.Message, state: FSMContext):
     try:
-        db.summ = float(message.text.strip())
-        spent = (db.cat, db.summ)
-        db.add_spent(message.from_user.username, spent)
-        bot.send_message(message.chat.id, 'Записано!', reply_markup=startmarkup)
+        summ = float(message.text.strip())
+        async with state.proxy() as data:
+            data['summ'] = summ
+        db.add_spent(message.from_user.username, (data['cat'], data['summ']))
+        await BotStates.menu.set()
+        await bot.send_message(message.chat.id, 'Записано!', reply_markup=startmarkup)
     except ValueError:
-        bot.send_message(message.chat.id, 'Надо число!', reply_markup=startmarkup)
+        await BotStates.menu.set()
+        await bot.send_message(message.chat.id, 'Надо число!', reply_markup=startmarkup)
 

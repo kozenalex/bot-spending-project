@@ -1,8 +1,9 @@
 from bot_body import bot_logic
+from aiogram import executor
 
 def main():
     # Запускаем бота
-    bot_logic.bot.polling(none_stop=True, interval=0)
+    executor.start_polling(bot_logic.dp)
 
 if __name__ == '__main__':
     main()
