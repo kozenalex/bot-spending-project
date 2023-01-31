@@ -1,11 +1,7 @@
-import aiogram.utils.markdown as md
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import ParseMode
-from aiogram.utils import executor
 from bot_body import weather_cast, curses
 import db
 from dotenv import load_dotenv
@@ -17,12 +13,8 @@ ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
 
 
 bot = Bot(token=ACCESS_TOKEN)
-dp = Dispatcher(bot=bot)
-
-# For example use simple MemoryStorage for Dispatcher.
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
-
 
 # States
 class BotStates(StatesGroup):
@@ -36,7 +28,7 @@ class BotStates(StatesGroup):
 startmarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 startmarkup.add('Погода', 'Курсы', 'Расходы')
 
-@dp.message_handler(commands=['start'])
+@dp.message_handler(commands=['start'], state='*')
 async def start(message: types.message):
     user_name = message.from_user.username
     db.create_tables(user_name)
@@ -67,18 +59,18 @@ async def handle_text(message: types.Message):
 @dp.message_handler(state=BotStates.weather)
 async def weather_msg(message: types.Message, state: FSMContext):
     city = message.text.strip()
-    m_text = weather_cast.get_weather(city)
+    m_text = await weather_cast.get_weather(city)
     await BotStates.menu.set()
     await bot.send_message(message.chat.id, m_text)
 
 @dp.message_handler(content_types=["text"], state=BotStates.curs)
 async def currency_msg(message: types.Message, state: FSMContext):
     currency = message.text.strip()
-    m_text = curses.get_curses()[currency]
+    m_text = await curses.get_curses()
     await BotStates.menu.set()
     await bot.send_message(
         message.chat.id,
-        str(m_text) + 'руб.',
+        str(m_text[currency]) + 'руб.',
         reply_markup=startmarkup
         )
 

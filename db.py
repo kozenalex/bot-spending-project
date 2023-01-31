@@ -7,8 +7,6 @@ CATEGORIES = (
     'Авто',
     'Кафе'
 )
-cat = None
-summ = None
 
 def gen_table_suffix():
     now = datetime.datetime.now()
