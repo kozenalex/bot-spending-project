@@ -11,7 +11,6 @@ env_path = os.path.join('.', '.env')
 load_dotenv(dotenv_path=env_path)
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN', None)
 
-
 bot = Bot(token=ACCESS_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)

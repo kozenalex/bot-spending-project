@@ -1,5 +1,11 @@
 import httpx
 import json
+from dotenv import load_dotenv
+import os
+
+env_path = os.path.join('.', '.env')
+load_dotenv(dotenv_path=env_path)
+WEATHER_TOKEN = os.getenv('WEATHER_TOKEN', None)
 
 
 async def get_weather(city: str, lat=None, lon=None):
@@ -8,13 +14,13 @@ async def get_weather(city: str, lat=None, lon=None):
         params = {
             'lat': lat,
             'lon': lon,
-            'APPID': '64c67d223f951745cb062a250e5b5ff4',
+            'APPID': WEATHER_TOKEN,
             'units': 'metric'
         }
     else:
         params={
                 'q': city,
-                'APPID': '64c67d223f951745cb062a250e5b5ff4',
+                'APPID': WEATHER_TOKEN,
                 'units': 'metric'
             }
     message = 'Ошибка какая-то'
