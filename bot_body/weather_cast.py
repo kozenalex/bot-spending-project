@@ -10,19 +10,15 @@ WEATHER_TOKEN = os.getenv('WEATHER_TOKEN', None)
 
 async def get_weather(city: str, lat=None, lon=None):
     url = 'http://api.openweathermap.org/data/2.5/weather'
+    params = {
+        'APPID': WEATHER_TOKEN,
+        'units': 'metric'
+    }
     if lat and lon:
-        params = {
-            'lat': lat,
-            'lon': lon,
-            'APPID': WEATHER_TOKEN,
-            'units': 'metric'
-        }
+        params['lat'] = lat
+        params['lon'] = lon
     else:
-        params={
-                'q': city,
-                'APPID': WEATHER_TOKEN,
-                'units': 'metric'
-            }
+        params['q'] = city
     message = 'Ошибка какая-то'
     async with httpx.AsyncClient() as client:
         response = await client.get(url=url, params=params)
