@@ -38,11 +38,24 @@ async def start(message: types.message):
         'Привет, выберите сервис:',
         reply_markup=startmarkup
     )
+
+@dp.message_handler(content_types=["text"], state=None)
+async def other_text(message: types.Message):
+    await bot.send_message(
+        message.chat.id,
+        'Бот был перезапущен, введите /start, или выберите сервис:',
+        reply_markup=startmarkup
+    )
+    await BotStates.menu.set()
+
 @dp.message_handler(content_types=["text"], state=BotStates.menu)
 async def handle_text(message: types.Message):
     if message.text.strip() == 'Погода':
+        weather_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        button = types.KeyboardButton('Ваше местоположение', request_location=True)
+        weather_markup.add(button)
         await BotStates.weather.set()
-        await bot.send_message(message.chat.id, 'Введите город')
+        await bot.send_message(message.chat.id, 'Введите город', reply_markup=weather_markup)
     elif message.text.strip() == 'Курсы':
         currency_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         currency_markup.add('USD', 'EUR')
@@ -56,12 +69,18 @@ async def handle_text(message: types.Message):
     else:
         await bot.send_message(message.chat.id, 'Вы написали: ' + message.text)
 
-@dp.message_handler(state=BotStates.weather)
+@dp.message_handler(content_types=['location', 'text'], state=BotStates.weather)
 async def weather_msg(message: types.Message, state: FSMContext):
-    city = message.text.strip()
-    m_text = await weather_cast.get_weather(city)
+    city = ''
+    if message.location:
+        lat = message.location.latitude
+        lon = message.location.longitude
+    else:
+        lat, lon = None, None
+        city = message.text.strip()
+    m_text = await weather_cast.get_weather(city, lat=lat, lon=lon)
     await BotStates.menu.set()
-    await bot.send_message(message.chat.id, m_text)
+    await bot.send_message(message.chat.id, m_text, reply_markup=startmarkup)
 
 @dp.message_handler(content_types=["text"], state=BotStates.curs)
 async def currency_msg(message: types.Message, state: FSMContext):
