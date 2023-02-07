@@ -11,5 +11,5 @@ async def get_curses():
     eur = res_json.get('Valute', 'OOoops кажется недоступен сервис')
     return {
         'USD': usd['USD']['Value'],
-        'EUR': eur['USD']['Value']
+        'EUR': eur['EUR']['Value']
     }

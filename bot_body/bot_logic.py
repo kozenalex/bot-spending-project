@@ -21,11 +21,15 @@ class BotStates(StatesGroup):
     curs = State()
     spent_cat = State()
     spent_sum = State()
+    spent_calc = State()
     menu = State()
 
 
 startmarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 startmarkup.add('Погода', 'Курсы', 'Расходы')
+
+spent_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+spent_markup.add(*db.CATEGORIES, 'Итого', 'Назад')
 
 @dp.message_handler(commands=['start'], state='*')
 async def start(message: types.message):
@@ -61,8 +65,6 @@ async def handle_text(message: types.Message):
         await BotStates.curs.set()
         await bot.send_message(message.chat.id, 'Выбор валюты:', reply_markup=currency_markup)
     elif message.text.strip() == 'Расходы':
-        spent_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        spent_markup.add(*db.CATEGORIES, 'Итого', 'Назад')
         await BotStates.spent_cat.set()
         await bot.send_message(message.chat.id, 'Категория:', reply_markup=spent_markup)
     else:
@@ -96,11 +98,10 @@ async def currency_msg(message: types.Message, state: FSMContext):
 async def get_category(message: types.Message, state: FSMContext):
     cat = message.text.strip()
     if cat == 'Итого':
-        sums = db.calculate_spent(message.from_user.username)
-        m_text = ''
-        for s in sums:
-            m_text += f'{s[0]}: {str(s[1])}\n'
-        await bot.send_message(message.chat.id, m_text)
+        month_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        month_markup.add('Предыдущий', 'Текущий')
+        await BotStates.spent_calc.set()
+        await bot.send_message(message.chat.id, 'Выберите месяц:', reply_markup=month_markup)
     elif cat == 'Назад':
         await BotStates.menu.set()
         await bot.send_message(message.chat.id, 'Выберите сервис:', reply_markup=startmarkup)
@@ -110,6 +111,16 @@ async def get_category(message: types.Message, state: FSMContext):
         await BotStates.spent_sum.set()
         await bot.send_message(message.chat.id, 'Введите сумму:')
 
+@dp.message_handler(content_types=["text"], state=BotStates.spent_calc)
+async def calculate_spent(message: types.Message, state: FSMContext):
+    curr_month = (message.text.strip() == 'Текущий')
+    sums = db.calculate_spent(message.from_user.username, curr_month=curr_month)
+    m_text = ''
+    for s in sums:
+        m_text += f'{s[0]}: {str(s[1])}\n'
+    await BotStates.spent_cat.set()
+    await bot.send_message(message.chat.id, m_text, reply_markup=spent_markup)
+
 @dp.message_handler(content_types=["text"], state=BotStates.spent_sum)
 async def add_sum(message: types.Message, state: FSMContext):
     try:
@@ -117,9 +128,9 @@ async def add_sum(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['summ'] = summ
         db.add_spent(message.from_user.username, (data['cat'], data['summ']))
-        await BotStates.menu.set()
-        await bot.send_message(message.chat.id, 'Записано!', reply_markup=startmarkup)
+        await BotStates.spent_cat.set()
+        await bot.send_message(message.chat.id, 'Записано!', reply_markup=spent_markup)
     except ValueError:
-        await BotStates.menu.set()
-        await bot.send_message(message.chat.id, 'Надо число!', reply_markup=startmarkup)
+        await BotStates.spent_cat.set()
+        await bot.send_message(message.chat.id, 'Надо число!', reply_markup=spent_markup)
 

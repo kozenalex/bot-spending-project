@@ -8,9 +8,11 @@ CATEGORIES = (
     'Кафе'
 )
 
-def gen_table_suffix():
+def gen_table_suffix(curr_month):
     now = datetime.datetime.now()
-    return str(now.year) + str(now.month)
+    year = str(now.year)
+    month = str(now.month) if curr_month else str(now.month - 1)
+    return year + month
 
 def db_init():
     conn = sqlite3.connect('spending.db')
@@ -39,11 +41,11 @@ def add_spent(user_name, data):
         conn.commit()
     conn.close()
 
-def calculate_spent(user_name):
+def calculate_spent(user_name, curr_month=True):
     conn = sqlite3.connect('spending.db')
     cur = conn.cursor()
     sums = list()
-    table_name = user_name + gen_table_suffix()
+    table_name = user_name + gen_table_suffix(curr_month)
     table_exist = conn.execute(""" SELECT count(name) 
     FROM sqlite_master WHERE type='table' AND name='""" + table_name + """'""")
     if table_exist.fetchone()[0]==1 :
