@@ -1,11 +1,11 @@
 import httpx
 import json
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from bot_body.consts import WEATHER_TOKEN
 
 env_path = os.path.join('.', '.env')
 load_dotenv(dotenv_path=env_path)
-WEATHER_TOKEN = os.getenv('WEATHER_TOKEN', None)
 
 
 async def get_weather(city: str, lat=None, lon=None):

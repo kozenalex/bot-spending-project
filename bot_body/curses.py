@@ -9,7 +9,9 @@ async def get_curses():
             res_json = json.loads(response.text)    
     usd = res_json.get('Valute', 'OOoops кажется недоступен сервис')
     eur = res_json.get('Valute', 'OOoops кажется недоступен сервис')
+    cny = res_json.get('Valute', 'OOoops кажется недоступен сервис')
     return {
         'USD': usd['USD']['Value'],
-        'EUR': eur['EUR']['Value']
+        'EUR': eur['EUR']['Value'],
+        'CNY': cny['CNY']['Value']
     }
