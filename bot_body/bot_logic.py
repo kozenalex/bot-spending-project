@@ -54,15 +54,15 @@ startmarkup = ReplyKeyboardMarkup(
     ], 
     resize_keyboard=True)
 
-spent_markup = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=cat) for cat in db.CATEGORIES],
-        [
-            KeyboardButton(text='Итого'),
-            KeyboardButton(text=consts.BACK_COMMAND)
-        ]
-    ],
-     resize_keyboard=True)
+# spent_markup = ReplyKeyboardMarkup(
+#     keyboard=[
+#         [KeyboardButton(text=cat) for cat in db.CATEGORIES],
+#         [
+#             KeyboardButton(text='Итого'),
+#             KeyboardButton(text=consts.BACK_COMMAND)
+#         ]
+#     ],
+#      resize_keyboard=True)
 
 transmission_markup = ReplyKeyboardMarkup(
     keyboard=[
