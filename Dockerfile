@@ -1,9 +1,11 @@
 FROM python:latest
 
-RUN pip3 install poetry
+RUN mkdir -p /myapp
+COPY *.py /myapp/
+COPY bot_body/ /myapp/
+COPY requirements.txt /myapp/
 
-WORKDIR $HOME/bot_body
-COPY . .
-RUN poetry install
+RUN pip3 install -r /myapp/requirements.txt
 
-CMD ["poetry", "run", "startbot"]
+WORKDIR /myapp
+CMD ["python3", "/myapp/bot_body/start.py"]

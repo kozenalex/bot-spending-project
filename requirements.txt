@@ -1,0 +1,5 @@
+pytelegrambotapi
+requests
+python-dotenv
+aiogram
+httpx
