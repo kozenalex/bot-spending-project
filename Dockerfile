@@ -1,7 +1,7 @@
 FROM python:latest
 
 RUN mkdir -p /myapp
-COPY *.py /myapp/
+
 COPY bot_body/ /myapp/
 COPY requirements.txt /myapp/
 
