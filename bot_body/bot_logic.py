@@ -124,9 +124,9 @@ async def handle_text(message: Message, state: FSMContext):
             await state.set_state(BotStates.curs)
             await message.answer('Выбор валюты:', reply_markup=currency_markup)
             
-        case 'Расходы':
-            await state.set_state(BotStates.spent_cat)
-            await message.answer('Категория:', reply_markup=spent_markup)
+        # case 'Расходы':
+        #     await state.set_state(BotStates.spent_cat)
+        #     await message.answer('Категория:', reply_markup=spent_markup)
         
         case consts.TORRENT_BUTTON:
             await state.set_state(BotStates.transmission)
