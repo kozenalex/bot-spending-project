@@ -2,7 +2,7 @@ import httpx
 import json
 import os
 from dotenv import load_dotenv
-from bot_body.consts import WEATHER_TOKEN
+from consts import WEATHER_TOKEN
 
 env_path = os.path.join('.', '.env')
 load_dotenv(dotenv_path=env_path)

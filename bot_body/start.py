@@ -1,6 +1,5 @@
 import asyncio
-from bot_body import bot_logic
-from aiogram import Bot, Dispatcher
+import bot_logic
 
 def main():
     asyncio.run(_run_bot())

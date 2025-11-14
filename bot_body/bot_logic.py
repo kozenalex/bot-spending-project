@@ -1,4 +1,4 @@
-import db
+# import db
 import os
 from typing import Union, Set
 
@@ -10,11 +10,11 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, message, Message
 from aiogram.filters import Command, StateFilter
 
-from bot_body import weather_cast, curses
+import weather_cast, curses
 from dotenv import load_dotenv
-from bot_body import consts
+import consts
 
-from bot_body.transmission import add_torrent_from_magnet, get_torrents, format_torrents_for_telegram
+from transmission import add_torrent_from_magnet, get_torrents, format_torrents_for_telegram
 
 env_path = os.path.join('.', '.env')
 load_dotenv(dotenv_path=env_path)
