@@ -2,7 +2,7 @@ import httpx
 import re
 import math
 from typing import List, Dict, Optional, Any
-from bot_body import consts
+import consts
 
 _session_id: Optional[str] = None
 
