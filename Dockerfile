@@ -1,11 +1,16 @@
-FROM python:latest
+FROM python:3.12-slim AS base
 
-RUN mkdir -p /myapp
+RUN groupadd -r app && useradd -r -g app app
 
-COPY bot_body/ /myapp/
-COPY requirements.txt /myapp/
+RUN mkdir -p /myapp && chown -R app:app /myapp
 
-RUN pip3 install -r /myapp/requirements.txt
+COPY --chown=app:app bot_body/ /myapp/
+COPY --chown=app:app requirements.txt /myapp/
+
+RUN pip3 install --no-cache-dir -r /myapp/requirements.txt
+
+USER app
 
 WORKDIR /myapp
-CMD ["python3", "/myapp/bot_body/start.py"]
+
+CMD ["python3", "/myapp/start.py"]

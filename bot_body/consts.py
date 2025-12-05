@@ -1,4 +1,6 @@
 import os
+import json
+
 # Config
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 WEATHER_TOKEN = os.getenv('WEATHER_TOKEN')
@@ -33,7 +35,9 @@ YUAN_BUTTON = {
 }
 
 # Users allowed to command bot
-ALLOWED_USER_IDS = set(os.getenv("USER_ADMINS"))
+ALLOWED_USER_IDS = set(
+    json.loads(os.getenv("USER_ADMINS"))
+    )
 
 
 print(f"Loaded conf. Token is {ACCESS_TOKEN} and URL is {TRANSMISSION_URL} and user is {ALLOWED_USER_IDS}")

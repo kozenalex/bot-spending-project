@@ -189,7 +189,7 @@ async def torrents_msg(message: Message, state: FSMContext):
                 for t in parsed_torrents:
                     await message.answer(t, reply_markup=transmission_markup)
             except Exception as e:
-                error_answer = e
+                error_answer = str(e)
                 await message.answer(error_answer, reply_markup=transmission_markup)
             await state.set_state(BotStates.transmission)                
                 

@@ -1,12 +1,9 @@
 import asyncio
 import bot_logic
 
-def main():
-    asyncio.run(_run_bot())
-
-async def _run_bot():
-    # Запускаем бота
+async def main():
     await bot_logic.dp.start_polling(bot_logic.bot)
+    
 
 if __name__ == '__main__':
     asyncio.run(main())
